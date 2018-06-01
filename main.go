@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"wen/wechatd/wechat"
+	"wen/wechat-notify/wechat"
 )
 
 // test

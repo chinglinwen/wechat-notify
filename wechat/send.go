@@ -55,7 +55,7 @@ func getToken() (string, error) {
 	requestTokenUrl := fmt.Sprintf("%vcorpid=%v&corpsecret=%v", requestTokenHeader, CropID, Secret)
 	resp, err := resty.R().Get(requestTokenUrl)
 	if err != nil {
-		return "", fmt.Errorf("get token err: ", err)
+		return "", fmt.Errorf("get token err: %v", err)
 	}
 	return gjson.Get(resp.String(), "access_token").String(), nil
 }
