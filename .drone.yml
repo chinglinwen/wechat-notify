@@ -1,0 +1,9 @@
+pipeline:
+  backend:
+    image: golang
+    commands:
+      - export GOPATH=$GOPATH:/drone
+      - go get -v ./...
+      - go build
+      - ls
+      - echo end
