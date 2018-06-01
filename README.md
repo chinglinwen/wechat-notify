@@ -1,3 +1,7 @@
-# wechat-notify
+# Wechat notify service
 
-wechat notify service
+## Demo
+
+```
+curl "localhost:8001/?user=wenzhenglin&content=aa"
+```
