@@ -8,7 +8,23 @@ import (
 	"wen/wechat-notify/wechat"
 
 	"github.com/chinglinwen/log"
+	"github.com/namsral/flag"
 )
+
+var (
+	defaultExpire         = flag.String("e", "10m", "default expire time")
+	defaultExpireDuration time.Duration
+)
+
+func init() {
+	flag.Parse()
+
+	var err error
+	defaultExpireDuration, err = time.ParseDuration(*defaultExpire)
+	if err != nil {
+		log.Fatalf("default expire: %v parse err: %v\n", *defaultExpire, err)
+	}
+}
 
 // test
 // curl "localhost:8001/?user=wenzhenglin&content=aa"
@@ -42,7 +58,7 @@ func sendmsg(w http.ResponseWriter, req *http.Request) {
 			log.Println(e)
 		}
 	} else {
-		d = 10 * time.Minute
+		d = defaultExpireDuration
 	}
 	log.Printf("user %v expire set to %v\n", user, d)
 	cacheSet(user, content, d)

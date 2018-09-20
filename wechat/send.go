@@ -5,6 +5,7 @@ import (
 	"log"
 	"strings"
 
+	"github.com/namsral/flag"
 	"github.com/tidwall/gjson"
 	"gopkg.in/resty.v1"
 )
@@ -44,15 +45,15 @@ type body struct {
 	content string
 }
 
-const (
-	CropID             = "wxbc5446c29a6e633f"
-	Secret             = "MJTShf7z4sSqUNce0ywG9hmA1ek34jP1tnuVINO-i59N4RTmZslFEElM03OUdhEo"
-	requestTokenHeader = "https://qyapi.weixin.qq.com/cgi-bin/gettoken?"
-	pushHeader         = "https://qyapi.weixin.qq.com/cgi-bin/message/send?access_token="
+var (
+	CorpID             = flag.String("corpid", "wxbc5446c29a6e633f", "corp id")
+	Secret             = flag.String("secret", "MJTShf7z4sSqUNce0ywG9hmA1ek34jP1tnuVINO-i59N4RTmZslFEElM03OUdhEo", "secret")
+	requestTokenHeader = flag.String("geturl", "https://qyapi.weixin.qq.com/cgi-bin/gettoken?", "token get url")
+	pushHeader         = flag.String("accessurl", "https://qyapi.weixin.qq.com/cgi-bin/message/send?access_token=", "token access url")
 )
 
 func getToken() (string, error) {
-	requestTokenUrl := fmt.Sprintf("%vcorpid=%v&corpsecret=%v", requestTokenHeader, CropID, Secret)
+	requestTokenUrl := fmt.Sprintf("%vcorpid=%v&corpsecret=%v", *requestTokenHeader, *CorpID, *Secret)
 	resp, err := resty.R().Get(requestTokenUrl)
 	if err != nil {
 		return "", fmt.Errorf("get token err: %v", err)
@@ -67,7 +68,7 @@ func getPushUrl() (string, error) {
 		return "", err
 	}
 
-	return fmt.Sprintf("%v%v", pushHeader, token), nil
+	return fmt.Sprintf("%v%v", *pushHeader, token), nil
 }
 
 func genBody(b body) string {

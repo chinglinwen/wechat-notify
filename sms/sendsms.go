@@ -1,3 +1,4 @@
+// not working for now
 package sms
 
 import (
@@ -7,7 +8,7 @@ import (
 	"io"
 	"net/url"
 
-	"github.com/go-resty/resty"
+	"gopkg.in/resty.v1"
 )
 
 const (
