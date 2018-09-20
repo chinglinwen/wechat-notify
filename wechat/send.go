@@ -5,8 +5,8 @@ import (
 	"log"
 	"strings"
 
-	"github.com/go-resty/resty"
 	"github.com/tidwall/gjson"
+	"gopkg.in/resty.v1"
 )
 
 /* doc
