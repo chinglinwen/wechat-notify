@@ -32,7 +32,7 @@ var bodytemplate = `
 {
    "touser": "%v",
    "msgtype": "text",
-   "agentid": "1",
+   "agentid": "%v",
    "text": {
        "content": "%v"
    },
@@ -42,10 +42,12 @@ var bodytemplate = `
 
 type body struct {
 	touser  []string
+	agentid string
 	content string
 }
 
 var (
+	AgentID            = flag.String("agentid", "2", "agent id") //default agentid 告警机器人-运维
 	CorpID             = flag.String("corpid", "wxbc5446c29a6e633f", "corp id")
 	Secret             = flag.String("secret", "MJTShf7z4sSqUNce0ywG9hmA1ek34jP1tnuVINO-i59N4RTmZslFEElM03OUdhEo", "secret")
 	requestTokenHeader = flag.String("geturl", "https://qyapi.weixin.qq.com/cgi-bin/gettoken?", "token get url")
@@ -73,20 +75,28 @@ func getPushUrl() (string, error) {
 
 func genBody(b body) string {
 	users := strings.Join(b.touser, "|")
-	return fmt.Sprintf(bodytemplate, users, b.content)
+	return fmt.Sprintf(bodytemplate, users, b.agentid, b.content)
 }
 
-func Send(user, content string) (string, error) {
+func Send(user, content, agentid string) (string, error) {
+	if agentid == "" {
+		agentid = *AgentID
+	}
 	return send(body{
 		touser:  []string{user},
 		content: content,
+		agentid: agentid,
 	})
 }
 
-func Sends(users []string, content string) (string, error) {
+func Sends(users []string, content, agentid string) (string, error) {
+	if agentid == "" {
+		agentid = *AgentID
+	}
 	return send(body{
 		touser:  users,
 		content: content,
+		agentid: agentid,
 	})
 }
 
