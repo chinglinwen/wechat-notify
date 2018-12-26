@@ -47,9 +47,9 @@ type body struct {
 }
 
 var (
-	AgentID            = flag.String("agentid", "2", "agent id") //default agentid 告警机器人-运维
-	CorpID             = flag.String("corpid", "wxbc5446c29a6e633f", "corp id")
-	Secret             = flag.String("secret", "MJTShf7z4sSqUNce0ywG9hmA1ek34jP1tnuVINO-i59N4RTmZslFEElM03OUdhEo", "secret")
+	AgentID            = flag.String("agentid", "1000002", "agent id") //default agentid 告警机器人-运维
+	CorpID             = flag.String("corpid", "ww89720c104a10253f", "corp id")
+	Secret             = flag.String("secret", "0G22tGXTEgr4eFAX1jxbHSVoXeWtZ8DmCW4LQcEnXvM", "secret")
 	requestTokenHeader = flag.String("geturl", "https://qyapi.weixin.qq.com/cgi-bin/gettoken?", "token get url")
 	pushHeader         = flag.String("accessurl", "https://qyapi.weixin.qq.com/cgi-bin/message/send?access_token=", "token access url")
 )

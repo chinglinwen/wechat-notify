@@ -22,5 +22,6 @@ require (
 	github.com/tidwall/match v0.0.0-20171002075945-1731857f09b1 // indirect
 	golang.org/x/crypto v0.0.0-20180910181607-0e37d006457b // indirect
 	golang.org/x/oauth2 v0.0.0-20180821212333-d2e6202438be // indirect
+	gopkg.in/gomail.v2 v2.0.0-20160411212932-81ebce5c23df
 	gopkg.in/resty.v1 v1.9.1
 )

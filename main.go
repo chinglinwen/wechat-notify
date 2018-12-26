@@ -4,7 +4,8 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
-	"wen/wechat-notify/wechat"
+
+	"github.com/chinglinwen/wechat-notify/wechat"
 
 	"github.com/chinglinwen/checkup/cache"
 	"github.com/chinglinwen/log"
@@ -18,6 +19,8 @@ import (
 // test
 // curl -s "localhost:8001/?user=wenzhenglin&content=test"
 // curl -s "localhost:8001/?user=wenzhenglin|zhaixg&content=test"
+// curl -s "localhost:8001/?user=WenZhengLin|LuRenJia&content=test2&agentid=1000002"
+// curl -s "localhost:8001/?user=中文名&content=test4"  //not ok, only wechat id works
 func sendmsg(w http.ResponseWriter, req *http.Request) {
 	user := req.FormValue("user")
 	users := strings.Split(user, ",")
