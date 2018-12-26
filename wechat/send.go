@@ -1,6 +1,7 @@
 package wechat
 
 import (
+	"crypto/tls"
 	"fmt"
 	"log"
 	"strings"
@@ -56,7 +57,10 @@ var (
 
 func getToken() (string, error) {
 	requestTokenUrl := fmt.Sprintf("%vcorpid=%v&corpsecret=%v", *requestTokenHeader, *CorpID, *Secret)
-	resp, err := resty.R().Get(requestTokenUrl)
+	resp, err := resty.
+		SetTLSClientConfig(&tls.Config{InsecureSkipVerify: true}).
+		R().
+		Get(requestTokenUrl)
 	if err != nil {
 		return "", fmt.Errorf("get token err: %v", err)
 	}
@@ -107,6 +111,7 @@ func send(b body) (string, error) {
 		return "", err
 	}
 	resp, err := resty. //SetDebug(true).
+				SetTLSClientConfig(&tls.Config{InsecureSkipVerify: true}).
 				R().
 				SetBody(string(data)).
 				Post(pushurl)
