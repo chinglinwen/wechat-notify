@@ -1,14 +1,16 @@
 package wechat
 
 import (
+	"bytes"
 	"crypto/tls"
 	"fmt"
 	"log"
 	"strings"
+	"text/template"
 
 	"github.com/namsral/flag"
 	"github.com/tidwall/gjson"
-	"gopkg.in/resty.v1"
+	resty "gopkg.in/resty.v1"
 )
 
 /* doc
@@ -31,20 +33,23 @@ http://qydev.weixin.qq.com/wiki/index.php?title=%E6%B6%88%E6%81%AF%E7%B1%BB%E5%9
 
 var bodytemplate = `
 {
-   "touser": "%v",
+	{{with .TouserRaw }}"touser": "{{.}}",{{end}}
+	{{with .Toparty }}"toparty": "{{.}}",{{end}}
    "msgtype": "text",
-   "agentid": "%v",
+   "agentid": "{{.Agentid}}",
    "text": {
-       "content": "%v"
+       "content": "{{.Content}}"
    },
    "safe":"0"
 }
 `
 
-type body struct {
-	touser  []string
-	agentid string
-	content string
+type Body struct {
+	Touser    []string
+	TouserRaw string
+	Toparty   string
+	Agentid   string
+	Content   string
 }
 
 var (
@@ -77,35 +82,43 @@ func getPushUrl() (string, error) {
 	return fmt.Sprintf("%v%v", *pushHeader, token), nil
 }
 
-func genBody(b body) string {
-	users := strings.Join(b.touser, "|")
-	return fmt.Sprintf(bodytemplate, users, b.agentid, b.content)
+func genBody(b Body) (result string, err error) {
+	b.TouserRaw = strings.Join(b.Touser, "|")
+	t := template.Must(template.New("body").Parse(bodytemplate))
+	var buf bytes.Buffer
+	err = t.Execute(&buf, b)
+	return buf.String(), err
 }
 
-func Send(user, content, agentid string) (string, error) {
+func Send(user, toparty, content, agentid string) (string, error) {
 	if agentid == "" {
 		agentid = *AgentID
 	}
-	return send(body{
-		touser:  []string{user},
-		content: content,
-		agentid: agentid,
+	return send(Body{
+		Touser:  []string{user},
+		Toparty: toparty,
+		Content: content,
+		Agentid: agentid,
 	})
 }
 
-func Sends(users []string, content, agentid string) (string, error) {
+func Sends(users []string, toparty, content, agentid string) (string, error) {
 	if agentid == "" {
 		agentid = *AgentID
 	}
-	return send(body{
-		touser:  users,
-		content: content,
-		agentid: agentid,
+	return send(Body{
+		Touser:  users,
+		Toparty: toparty,
+		Content: content,
+		Agentid: agentid,
 	})
 }
 
-func send(b body) (string, error) {
-	data := genBody(b)
+func send(b Body) (string, error) {
+	data, err := genBody(b)
+	if err != nil {
+		return "", err
+	}
 	pushurl, err := getPushUrl()
 	if err != nil {
 		return "", err
