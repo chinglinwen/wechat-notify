@@ -34,6 +34,7 @@ func sendmsg(w http.ResponseWriter, req *http.Request) {
 	toparty := req.FormValue("toparty")
 	expire := req.FormValue("expire")
 
+	precontent := req.FormValue("precontent")
 	content := req.FormValue("content")
 	agentid := req.FormValue("agentid")
 	status := req.FormValue("status")
@@ -53,8 +54,8 @@ func sendmsg(w http.ResponseWriter, req *http.Request) {
 	}
 
 	if d, found := cache.Get(user, toparty, content, status); found {
-		e := fmt.Sprintf("user: %v, content: %v not expired in %v, skip send\n",
-			user, content, d.Format("15:04:05"))
+		e := fmt.Sprintf("skip send(not expired in %v), user: %v, content: %v\n",
+			d.Format("15:04:05"), user, content)
 		log.Printf(e)
 		fmt.Fprintf(w, e)
 		return
@@ -66,16 +67,16 @@ func sendmsg(w http.ResponseWriter, req *http.Request) {
 		cache.Set(user, toparty, content, status, expire)
 	}
 
-	content += " " + status
+	contentbody := precontent + content + " " + status
 	var msg string
-	_, err := wechat.Sends(users, toparty, content, agentid)
+	_, err := wechat.Sends(users, toparty, contentbody, agentid)
 	if err != nil {
-		msg = fmt.Sprintf("send user: %v, %v, status: %v, expire: %v, err: %v\n", user, content, status, expire, err)
+		msg = fmt.Sprintf("send err: %v, user: %v, %v, status: %v, expire: %v\n", err, user, content, status, expire)
 		log.Printf(msg)
 		fmt.Fprintf(w, msg)
 		return
 	}
-	msg = fmt.Sprintf("send ok: %v, %v, status: %v, expire: %v\n", user, content, status, expire)
+	msg = fmt.Sprintf("send ok, user: %v, %v, status: %v, expire: %v\n", user, content, status, expire)
 	log.Printf(msg)
 	fmt.Fprintf(w, msg)
 	return
