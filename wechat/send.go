@@ -49,19 +49,24 @@ type Body struct {
 	TouserRaw string
 	Toparty   string
 	Agentid   string
+	Secret    string
 	Content   string
 }
 
 var (
-	AgentID            = flag.String("agentid", "1000002", "agent id") //default agentid 告警机器人-运维
-	CorpID             = flag.String("corpid", "ww89720c104a10253f", "corp id")
-	Secret             = flag.String("secret", "0G22tGXTEgr4eFAX1jxbHSVoXeWtZ8DmCW4LQcEnXvM", "secret")
+	AgentID = flag.String("agentid", "1000002", "agent id") //default agentid 告警机器人-运维
+	Secret  = flag.String("secret", "0G22tGXTEgr4eFAX1jxbHSVoXeWtZ8DmCW4LQcEnXvM", "secret")
+	// AgentID = flag.String("agentid", "1000003", "agent id")
+	// Secret  = flag.String("secret", "G5h7CTEqkBw-Fe3luf2JM8UNNJAcYTpbXvpveY7M3lg", "secret")  //k8s
+
+	CorpID = flag.String("corpid", "ww89720c104a10253f", "corp id")
+
 	requestTokenHeader = flag.String("geturl", "https://qyapi.weixin.qq.com/cgi-bin/gettoken?", "token get url")
 	pushHeader         = flag.String("accessurl", "https://qyapi.weixin.qq.com/cgi-bin/message/send?access_token=", "token access url")
 )
 
-func getToken() (string, error) {
-	requestTokenUrl := fmt.Sprintf("%vcorpid=%v&corpsecret=%v", *requestTokenHeader, *CorpID, *Secret)
+func getToken(secret string) (string, error) {
+	requestTokenUrl := fmt.Sprintf("%vcorpid=%v&corpsecret=%v", *requestTokenHeader, *CorpID, secret)
 	resp, err := resty.
 		SetTLSClientConfig(&tls.Config{InsecureSkipVerify: true}).
 		R().
@@ -72,8 +77,8 @@ func getToken() (string, error) {
 	return gjson.Get(resp.String(), "access_token").String(), nil
 }
 
-func getPushUrl() (string, error) {
-	token, err := getToken()
+func getPushUrl(secret string) (string, error) {
+	token, err := getToken(secret)
 	if err != nil {
 		log.Println("token err: ", token)
 		return "", err
@@ -90,27 +95,35 @@ func genBody(b Body) (result string, err error) {
 	return buf.String(), err
 }
 
-func Send(user, toparty, content, agentid string) (string, error) {
+func Send(user, toparty, content, agentid, secret string) (string, error) {
 	if agentid == "" {
 		agentid = *AgentID
+	}
+	if secret == "" {
+		secret = *Secret
 	}
 	return send(Body{
 		Touser:  []string{user},
 		Toparty: toparty,
 		Content: content,
 		Agentid: agentid,
+		Secret:  secret,
 	})
 }
 
-func Sends(users []string, toparty, content, agentid string) (string, error) {
+func Sends(users []string, toparty, content, agentid, secret string) (string, error) {
 	if agentid == "" {
 		agentid = *AgentID
+	}
+	if secret == "" {
+		secret = *Secret
 	}
 	return send(Body{
 		Touser:  users,
 		Toparty: toparty,
 		Content: content,
 		Agentid: agentid,
+		Secret:  secret,
 	})
 }
 
@@ -119,7 +132,7 @@ func send(b Body) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	pushurl, err := getPushUrl()
+	pushurl, err := getPushUrl(b.Secret)
 	if err != nil {
 		return "", err
 	}

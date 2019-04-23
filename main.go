@@ -16,6 +16,7 @@ var (
 	addr = flag.String("a", ":8001", "listening address")
 )
 
+// https://work.weixin.qq.com/wework_admin/frame#apps/modApiApp/5629500139363788
 // agentid 2 is 告警机器人-运维
 
 // the user is email prefix, there's no group
@@ -28,6 +29,10 @@ var (
 // curl -s "localhost:8001/?toparty=3&content=test4&agentid=1000002&expire=1m"
 // curl -s "localhost:8001/?user=wenzhenglin&content=test5&agentid=1000002&expire=1m"
 // curl -s "localhost:8001/?user=中文名&content=test4"  //not ok, only wechat id works
+//
+// curl -s "localhost:8001/?toparty=2&content=test2&agentid=1000002"
+// curl -s "localhost:8001/?toparty=2&content=test5"
+// curl -s "localhost:8001/?toparty=2&content=test6&agentid=1000003&secret=G5h7CTEqkBw-Fe3luf2JM8UNNJAcYTpbXvpveY7M3lg"
 func sendmsg(w http.ResponseWriter, req *http.Request) {
 	user := req.FormValue("user")
 	users := strings.Split(user, ",")
@@ -37,6 +42,8 @@ func sendmsg(w http.ResponseWriter, req *http.Request) {
 	precontent := req.FormValue("precontent")
 	content := req.FormValue("content")
 	agentid := req.FormValue("agentid")
+	secret := req.FormValue("secret")
+
 	status := req.FormValue("status")
 
 	if user == "" && toparty == "" {
@@ -69,7 +76,7 @@ func sendmsg(w http.ResponseWriter, req *http.Request) {
 
 	contentbody := precontent + content + " " + status
 	var msg string
-	_, err := wechat.Sends(users, toparty, contentbody, agentid)
+	_, err := wechat.Sends(users, toparty, contentbody, agentid, secret)
 	if err != nil {
 		msg = fmt.Sprintf("send err: %v, user: %v, %v, status: %v, expire: %v\n", err, user, content, status, expire)
 		log.Printf(msg)
