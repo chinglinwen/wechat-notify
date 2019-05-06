@@ -146,7 +146,7 @@ func combine() {
 					msg[key] = v
 				} else {
 					t := msg[key]
-					t.Content += "\n-----\n" + v.Content
+					t.Content += "\n=======\n" + v.Content
 					msg[key] = t
 				}
 			case <-time.After(2000 * time.Millisecond): // combine between 2 seconds
