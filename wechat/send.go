@@ -7,6 +7,7 @@ import (
 	"log"
 	"strings"
 	"text/template"
+	"time"
 
 	"github.com/namsral/flag"
 	"github.com/tidwall/gjson"
@@ -95,36 +96,79 @@ func genBody(b Body) (result string, err error) {
 	return buf.String(), err
 }
 
-func Send(user, toparty, content, agentid, secret string) (string, error) {
+func Send(user, toparty, content, agentid, secret string) {
 	if agentid == "" {
 		agentid = *AgentID
 	}
 	if secret == "" {
 		secret = *Secret
 	}
-	return send(Body{
+	bodyChan <- Body{
 		Touser:  []string{user},
 		Toparty: toparty,
 		Content: content,
 		Agentid: agentid,
 		Secret:  secret,
-	})
+	}
+	return
 }
 
-func Sends(users []string, toparty, content, agentid, secret string) (string, error) {
+func Sends(users []string, toparty, content, agentid, secret string) {
 	if agentid == "" {
 		agentid = *AgentID
 	}
 	if secret == "" {
 		secret = *Secret
 	}
-	return send(Body{
+	bodyChan <- Body{
 		Touser:  users,
 		Toparty: toparty,
 		Content: content,
 		Agentid: agentid,
 		Secret:  secret,
-	})
+	}
+	return
+}
+
+var bodyChan = make(chan Body, 1000) // buffer item 1000 for the combine of burst
+
+func combine() {
+	log.Println("starting combine goroutine in the background")
+
+	msgs := make(chan Body)
+	go func(in chan Body) {
+		msg := make(map[string]Body)
+		for {
+			select {
+			case v := <-bodyChan:
+				key := fmt.Sprintf("%v%v", v.Touser, v.Toparty)
+				if _, ok := msg[key]; !ok {
+					msg[key] = v
+				} else {
+					t := msg[key]
+					t.Content += "\n-----\n" + v.Content
+					msg[key] = t
+				}
+			case <-time.After(2000 * time.Millisecond): // combine between 2 seconds
+				for k, v := range msg {
+					msgs <- v
+					delete(msg, k)
+				}
+
+			}
+		}
+
+	}(bodyChan)
+
+	for v := range msgs {
+		// time.Sleep(1 * time.Second)
+		log.Printf("combined msg for user: %v, party: %v, for the busrt\n", v.Touser, v.Toparty)
+		send(v)
+	}
+}
+
+func init() {
+	go combine()
 }
 
 func send(b Body) (string, error) {

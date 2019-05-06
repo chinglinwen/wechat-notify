@@ -76,14 +76,16 @@ func sendmsg(w http.ResponseWriter, req *http.Request) {
 
 	contentbody := precontent + content + " " + status
 	var msg string
-	_, err := wechat.Sends(users, toparty, contentbody, agentid, secret)
-	if err != nil {
-		msg = fmt.Sprintf("send err: %v, user: %v, %v, status: %v, expire: %v\n", err, user, content, status, expire)
-		log.Printf(msg)
-		fmt.Fprintf(w, msg)
-		return
-	}
-	msg = fmt.Sprintf("send ok, user: %v, %v, status: %v, expire: %v\n", user, content, status, expire)
+	wechat.Sends(users, toparty, contentbody, agentid, secret)
+
+	// _, err := wechat.Sends(users, toparty, contentbody, agentid, secret)
+	// if err != nil {
+	// 	msg = fmt.Sprintf("send err: %v, user: %v, %v, status: %v, expire: %v\n", err, user, content, status, expire)
+	// 	log.Printf(msg)
+	// 	fmt.Fprintf(w, msg)
+	// 	return
+	// }
+	msg = fmt.Sprintf("send processed, user: %v, %v, status: %v, expire: %v\n", user, content, status, expire)
 	log.Printf(msg)
 	fmt.Fprintf(w, msg)
 	return
