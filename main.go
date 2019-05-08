@@ -9,11 +9,6 @@ import (
 	"wen/wechat-notify/wechat"
 
 	"github.com/chinglinwen/log"
-	"github.com/namsral/flag"
-)
-
-var (
-	addr = flag.String("a", ":8001", "listening address")
 )
 
 // https://work.weixin.qq.com/wework_admin/frame#apps/modApiApp/5629500139363788
@@ -92,7 +87,6 @@ func sendmsg(w http.ResponseWriter, req *http.Request) {
 }
 
 func main() {
-	flag.Parse()
 	log.Println("starting...")
 	http.HandleFunc("/", sendmsg)
 	err := http.ListenAndServe(*addr, nil)

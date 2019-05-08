@@ -9,7 +9,6 @@ import (
 	"text/template"
 	"time"
 
-	"github.com/namsral/flag"
 	"github.com/tidwall/gjson"
 	resty "gopkg.in/resty.v1"
 )
@@ -55,19 +54,24 @@ type Body struct {
 }
 
 var (
-	AgentID = flag.String("agentid", "1000002", "agent id") //default agentid 告警机器人-运维
-	Secret  = flag.String("secret", "0G22tGXTEgr4eFAX1jxbHSVoXeWtZ8DmCW4LQcEnXvM", "secret")
-	// AgentID = flag.String("agentid", "1000003", "agent id")
-	// Secret  = flag.String("secret", "G5h7CTEqkBw-Fe3luf2JM8UNNJAcYTpbXvpveY7M3lg", "secret")  //k8s
-
-	CorpID = flag.String("corpid", "ww89720c104a10253f", "corp id")
-
-	requestTokenHeader = flag.String("geturl", "https://qyapi.weixin.qq.com/cgi-bin/gettoken?", "token get url")
-	pushHeader         = flag.String("accessurl", "https://qyapi.weixin.qq.com/cgi-bin/message/send?access_token=", "token access url")
+	agentID            string
+	secret             string
+	corpID             string
+	requestTokenHeader string
+	pushHeader         string
 )
 
+// init default values
+func Init(agentidx, secretx, corpidx, requestTokenHeaderx, pushHeaderx string) {
+	agentID = agentidx
+	secret = secretx
+	corpID = corpidx
+	requestTokenHeader = requestTokenHeaderx
+	pushHeader = pushHeaderx
+}
+
 func getToken(secret string) (string, error) {
-	requestTokenUrl := fmt.Sprintf("%vcorpid=%v&corpsecret=%v", *requestTokenHeader, *CorpID, secret)
+	requestTokenUrl := fmt.Sprintf("%vcorpid=%v&corpsecret=%v", requestTokenHeader, corpID, secret)
 	resp, err := resty.
 		SetTLSClientConfig(&tls.Config{InsecureSkipVerify: true}).
 		R().
@@ -85,7 +89,7 @@ func getPushUrl(secret string) (string, error) {
 		return "", err
 	}
 
-	return fmt.Sprintf("%v%v", *pushHeader, token), nil
+	return fmt.Sprintf("%v%v", pushHeader, token), nil
 }
 
 func genBody(b Body) (result string, err error) {
@@ -98,10 +102,10 @@ func genBody(b Body) (result string, err error) {
 
 func Send(user, toparty, content, agentid, secret string) {
 	if agentid == "" {
-		agentid = *AgentID
+		agentid = agentID
 	}
 	if secret == "" {
-		secret = *Secret
+		secret = secret
 	}
 	bodyChan <- Body{
 		Touser:  []string{user},
@@ -115,10 +119,10 @@ func Send(user, toparty, content, agentid, secret string) {
 
 func Sends(users []string, toparty, content, agentid, secret string) {
 	if agentid == "" {
-		agentid = *AgentID
+		agentid = agentID
 	}
 	if secret == "" {
-		secret = *Secret
+		secret = secret
 	}
 	bodyChan <- Body{
 		Touser:  users,
