@@ -8,7 +8,8 @@ import (
 )
 
 var (
-	addr = flag.String("a", ":8001", "listening address")
+	addr  = flag.String("a", ":8001", "listening address")
+	debug = flag.Bool("debug", false, "enable debug")
 
 	AgentID = flag.String("agentid", "", "agent id") //default agentid 告警机器人-运维
 	Secret  = flag.String("secret", "", "secret")
@@ -30,5 +31,5 @@ func init() {
 		log.Fatal("corpid is empty")
 	}
 
-	wechat.Init(*AgentID, *Secret, *CorpID, *RequestTokenHeader, *PushHeader)
+	wechat.Init(*AgentID, *Secret, *CorpID, *RequestTokenHeader, *PushHeader, *debug)
 }

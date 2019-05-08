@@ -54,32 +54,44 @@ type Body struct {
 }
 
 var (
-	agentID            string
-	secret             string
-	corpID             string
+	defaultAgentID     string
+	defaultSecret      string
+	defaultCorpID      string
 	requestTokenHeader string
 	pushHeader         string
+	debugFlag          bool
 )
 
 // init default values
-func Init(agentidx, secretx, corpidx, requestTokenHeaderx, pushHeaderx string) {
-	agentID = agentidx
-	secret = secretx
-	corpID = corpidx
+func Init(agentidx, secretx, corpidx, requestTokenHeaderx, pushHeaderx string, debug bool) {
+	defaultAgentID = agentidx
+	defaultSecret = secretx
+	defaultCorpID = corpidx
 	requestTokenHeader = requestTokenHeaderx
 	pushHeader = pushHeaderx
+
+	debugFlag = debug
 }
 
 func getToken(secret string) (string, error) {
-	requestTokenUrl := fmt.Sprintf("%vcorpid=%v&corpsecret=%v", requestTokenHeader, corpID, secret)
-	resp, err := resty.
+	requestTokenUrl := fmt.Sprintf("%vcorpid=%v&corpsecret=%v", requestTokenHeader, defaultCorpID, secret)
+	resp, err := resty.SetDebug(debugFlag).
 		SetTLSClientConfig(&tls.Config{InsecureSkipVerify: true}).
 		R().
 		Get(requestTokenUrl)
 	if err != nil {
 		return "", fmt.Errorf("get token err: %v", err)
 	}
-	return gjson.Get(resp.String(), "access_token").String(), nil
+	errcode := gjson.Get(resp.String(), "errcode").Int()
+	if errcode != 0 {
+		errmsg := gjson.Get(resp.String(), "errmsg").String()
+		return "", fmt.Errorf("gettoken err: %v", strings.Split(errmsg, ",")[0])
+	}
+	token := gjson.Get(resp.String(), "access_token").String()
+	if token == "" {
+		return "", fmt.Errorf("got empty token")
+	}
+	return token, nil
 }
 
 func getPushUrl(secret string) (string, error) {
@@ -102,10 +114,10 @@ func genBody(b Body) (result string, err error) {
 
 func Send(user, toparty, content, agentid, secret string) {
 	if agentid == "" {
-		agentid = agentID
+		agentid = defaultAgentID
 	}
 	if secret == "" {
-		secret = secret
+		secret = defaultSecret
 	}
 	bodyChan <- Body{
 		Touser:  []string{user},
@@ -119,10 +131,10 @@ func Send(user, toparty, content, agentid, secret string) {
 
 func Sends(users []string, toparty, content, agentid, secret string) {
 	if agentid == "" {
-		agentid = agentID
+		agentid = defaultAgentID
 	}
 	if secret == "" {
-		secret = secret
+		secret = defaultSecret
 	}
 	bodyChan <- Body{
 		Touser:  users,
@@ -167,7 +179,10 @@ func combine() {
 	for v := range msgs {
 		// time.Sleep(1 * time.Second)
 		log.Printf("combined msg for user: %v, party: %v, for the busrt\n", v.Touser, v.Toparty)
-		send(v)
+		_, err := send(v)
+		if err != nil {
+			log.Printf("combine err: %v\n", err)
+		}
 	}
 }
 
@@ -184,13 +199,19 @@ func send(b Body) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	resp, err := resty. //SetDebug(true).
-				SetTLSClientConfig(&tls.Config{InsecureSkipVerify: true}).
-				R().
-				SetBody(string(data)).
-				Post(pushurl)
+	resp, err := resty.SetDebug(debugFlag).
+		SetTLSClientConfig(&tls.Config{InsecureSkipVerify: true}).
+		R().
+		SetBody(string(data)).
+		Post(pushurl)
+
 	if err != nil {
 		return "", err
+	}
+	errcode := gjson.Get(resp.String(), "errcode").Int()
+	if errcode != 0 {
+		errmsg := gjson.Get(resp.String(), "errmsg").String()
+		return "", fmt.Errorf("send err: %v", strings.Split(errmsg, ",")[0])
 	}
 	return resp.String(), nil
 }

@@ -2,4 +2,4 @@
 wechat-notify
 *.gz
 *.bak
-cre.go
+cre_test.go

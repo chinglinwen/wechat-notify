@@ -15,9 +15,36 @@ func TestGenBody(t *testing.T) {
 	fmt.Println(genBody(a)) //1000002: 突然报警
 }
 
+func TestGetToken(t *testing.T) {
+	_, err := getToken("aa")
+	if err == nil {
+		t.Errorf("get token expect err invalid credential,got nil error\n")
+		return
+	}
+
+	token, err := getToken(secret)
+	if err != nil {
+		t.Errorf("get token err: %v\n", err)
+		return
+	}
+	fmt.Println("got token", token)
+}
+
 func TestSend(t *testing.T) {
-	// fmt.Println(Send("wenzhenglin", "2", "hello2", "1000002")) //1000002: 突然报警
-	Send("", "3", "hello3", "1000002", "") //1000002: 突然报警
+	b := Body{
+		Touser:  []string{"wenzhenglin"},
+		Toparty: "",
+		Content: "hello2",
+		Agentid: agentID,
+		Secret:  secret,
+	}
+	out, err := send(b)
+	if err != nil {
+		t.Errorf("send err %v\n", err)
+		return
+	}
+	fmt.Println("send reply", out) //1000002: 突然报警
+	// Send("", "3", "hello3", "1000002", "") //1000002: 突然报警
 }
 
 func TestSends(t *testing.T) {
