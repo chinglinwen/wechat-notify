@@ -22,7 +22,7 @@ func TestGetToken(t *testing.T) {
 		return
 	}
 
-	token, err := getToken(secret)
+	token, err := getToken(defaultSecret)
 	if err != nil {
 		t.Errorf("get token err: %v\n", err)
 		return
@@ -35,8 +35,8 @@ func TestSend(t *testing.T) {
 		Touser:  []string{"wenzhenglin"},
 		Toparty: "",
 		Content: "hello2",
-		Agentid: agentID,
-		Secret:  secret,
+		Agentid: defaultAgentID,
+		Secret:  defaultSecret,
 	}
 	out, err := send(b)
 	if err != nil {
@@ -45,10 +45,6 @@ func TestSend(t *testing.T) {
 	}
 	fmt.Println("send reply", out) //1000002: 突然报警
 	// Send("", "3", "hello3", "1000002", "") //1000002: 突然报警
-}
-
-func TestSends(t *testing.T) {
-	Sends([]string{"wenzhenglin", "wenzhenglin"}, "", "hello1 from sends", "1000002", "")
 }
 
 /*
