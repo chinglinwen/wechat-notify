@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"net/http"
 	"strings"
@@ -28,6 +29,9 @@ import (
 // curl -s "localhost:8001/?toparty=2&content=test2&agentid=1000002"
 // curl -s "localhost:8001/?toparty=2&content=test5"
 // curl -s "localhost:8001/?toparty=2&content=test6&agentid=1000003&secret=G5h7CTEqkBw-Fe3luf2JM8UNNJAcYTpbXvpveY7M3lg"
+// curl -s "http://wechat-notify.devops.haodai.net/?toparty=2&content=test6&agentid=1000005&secret=3Kds9ib-5JwY7-DrlxGIBq7XOjYDf846W3_Tda2sLe022"
+// curl -s "http://wechat-notify.devops.haodai.net/?user=wenzhenglin&content=test6&agentid=1000005&secret=3Kds9ib-5JwY7-DrlxGIBq7XOjYDf846W3_Tda2sLe0"
+// curl -s "http://wechat-notify.devops.haodai.net/?toparty=10&content=test6&agentid=1000005&secret=3Kds9ib-5JwY7-DrlxGIBq7XOjYDf846W3_Tda2sLe0"
 func sendmsg(w http.ResponseWriter, req *http.Request) {
 	user := req.FormValue("user")
 	users := strings.Split(user, ",")
@@ -41,8 +45,17 @@ func sendmsg(w http.ResponseWriter, req *http.Request) {
 
 	status := req.FormValue("status")
 
+	exceptme := req.FormValue("exceptme")
+
 	if user == "" && toparty == "" {
 		e := fmt.Sprintf("user: %v, or toparty: %v is empty\n", user, toparty)
+		log.Printf(e)
+		fmt.Fprintf(w, e)
+		return
+	}
+
+	if exceptme != "" && toparty == "" {
+		e := fmt.Sprintf("expectme %v provided: %v, but toparty is empty\n", exceptme, toparty)
 		log.Printf(e)
 		fmt.Fprintf(w, e)
 		return
@@ -71,7 +84,7 @@ func sendmsg(w http.ResponseWriter, req *http.Request) {
 
 	contentbody := precontent + content + " " + status
 	var msg string
-	wechat.Sends(users, toparty, contentbody, agentid, secret)
+	wechat.Sends(users, toparty, contentbody, agentid, secret, exceptme)
 
 	// _, err := wechat.Sends(users, toparty, contentbody, agentid, secret)
 	// if err != nil {
@@ -88,6 +101,10 @@ func sendmsg(w http.ResponseWriter, req *http.Request) {
 
 func main() {
 	log.Println("starting...")
+
+	flag.Parse()
+	wechat.CheckFlag()
+
 	http.HandleFunc("/", sendmsg)
 	err := http.ListenAndServe(*addr, nil)
 	if err != nil {

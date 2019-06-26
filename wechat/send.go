@@ -53,29 +53,29 @@ type Body struct {
 	Content   string
 }
 
-var (
-	defaultAgentID     string
-	defaultSecret      string
-	defaultCorpID      string
-	requestTokenHeader string
-	pushHeader         string
-	debugFlag          bool
-)
+// var (
+// 	defaultAgentID     string
+// 	defaultSecret      string
+// 	defaultCorpID      string
+// 	requestTokenHeader string
+// 	pushHeader         string
+// 	debugFlag          bool
+// )
 
-// init default values
-func Init(agentidx, secretx, corpidx, requestTokenHeaderx, pushHeaderx string, debug bool) {
-	defaultAgentID = agentidx
-	defaultSecret = secretx
-	defaultCorpID = corpidx
-	requestTokenHeader = requestTokenHeaderx
-	pushHeader = pushHeaderx
+// // init default values
+// func Init(agentidx, secretx, corpidx, requestTokenHeaderx, pushHeaderx string, debug bool) {
+// 	defaultAgentID = agentidx
+// 	defaultSecret = secretx
+// 	defaultCorpID = corpidx
+// 	requestTokenHeader = requestTokenHeaderx
+// 	pushHeader = pushHeaderx
 
-	debugFlag = debug
-}
+// 	debugFlag = debug
+// }
 
 func getToken(secret string) (string, error) {
-	requestTokenUrl := fmt.Sprintf("%vcorpid=%v&corpsecret=%v", requestTokenHeader, defaultCorpID, secret)
-	resp, err := resty.SetDebug(debugFlag).
+	requestTokenUrl := fmt.Sprintf("%vcorpid=%v&corpsecret=%v", *requestTokenHeader, *defaultCorpID, secret)
+	resp, err := resty.SetDebug(*debugFlag).
 		SetTLSClientConfig(&tls.Config{InsecureSkipVerify: true}).
 		R().
 		Get(requestTokenUrl)
@@ -101,7 +101,7 @@ func getPushUrl(secret string) (string, error) {
 		return "", err
 	}
 
-	return fmt.Sprintf("%v%v", pushHeader, token), nil
+	return fmt.Sprintf("%v%v", *pushHeader, token), nil
 }
 
 func genBody(b Body) (result string, err error) {
@@ -114,10 +114,10 @@ func genBody(b Body) (result string, err error) {
 
 func Send(user, toparty, content, agentid, secret string) {
 	if agentid == "" {
-		agentid = defaultAgentID
+		agentid = *defaultAgentID
 	}
 	if secret == "" {
-		secret = defaultSecret
+		secret = *defaultSecret
 	}
 	bodyChan <- Body{
 		Touser:  []string{user},
@@ -129,12 +129,19 @@ func Send(user, toparty, content, agentid, secret string) {
 	return
 }
 
-func Sends(users []string, toparty, content, agentid, secret string) {
+func Sends(users []string, toparty, content, agentid, secret, exceptme string) (err error) {
 	if agentid == "" {
-		agentid = defaultAgentID
+		agentid = *defaultAgentID
 	}
 	if secret == "" {
-		secret = defaultSecret
+		secret = *defaultSecret
+	}
+	if exceptme != "" {
+		users, err = genUsersString(secret, toparty, exceptme)
+		if err != nil {
+			return err
+		}
+		toparty = ""
 	}
 	bodyChan <- Body{
 		Touser:  users,
@@ -199,7 +206,7 @@ func send(b Body) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	resp, err := resty.SetDebug(debugFlag).
+	resp, err := resty.SetDebug(*debugFlag).
 		SetTLSClientConfig(&tls.Config{InsecureSkipVerify: true}).
 		R().
 		SetBody(string(data)).

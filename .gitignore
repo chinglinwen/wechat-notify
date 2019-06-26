@@ -3,3 +3,4 @@ wechat-notify
 *.gz
 *.bak
 cre_test.go
+test.sh
